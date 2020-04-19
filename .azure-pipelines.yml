@@ -61,3 +61,25 @@ jobs:
         targets/*.deb
         targets/*.rpm
         targets/*.7z
+- job: 'macos'
+  pool:
+    vmImage: 'macOS-10.14'
+  strategy:
+    matrix:
+      cocoa:
+        target: macos-cocoa
+        macosx_deployment_target: '10.7'
+  timeoutInMinutes: 0
+  steps:
+  - script: |
+      brew install conan
+      sudo -H pip install pyyaml --ignore-installed six
+      sudo gem install fpm --no-ri --no-rdoc
+      sudo xcode-select --switch /Library/Developer/CommandLineTools
+    displayName: 'install dependencies'
+  - script: |
+      git clone --recurse-submodules https://github.com/wkhtmltopdf/wkhtmltopdf.git
+      cd wkhtmltopdf && git checkout $(checkout) && git submodule update
+    displayName: 'clone wkhtmltopdf'
+  - script: python build vagrant $(target) --version - - --iteration $(iteration) wkhtmltopdf
+    displayName: 'build package'
